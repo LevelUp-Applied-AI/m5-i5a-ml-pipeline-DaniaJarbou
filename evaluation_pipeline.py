@@ -68,13 +68,64 @@ def define_models():
     Returns:
         Dictionary mapping model name to (preprocessor, model) Pipeline.
     """
-    # TODO: Create 5 Pipelines, each using the preprocessor + a model:
+    preprocessor = build_preprocessor()
+    random_state=42
+    max_iter = 1000
+    class_weight = 'balanced'
+    
+    #Create 5 Pipelines, each using the preprocessor + a model:
+    models = { 
+        
     #   1. "LogReg_default" — LogisticRegression with default C
+   "LogReg_def" : Pipeline([
+        ('preprocessor', preprocessor),
+        ('model',LogisticRegression(
+            C=1.0,
+            random_state=random_state,
+            max_iter=max_iter,
+            class_weight=class_weight
+        ))
+    ]),
     #   2. "LogReg_L1" — LogisticRegression with C=0.1, penalty='l1', solver='saga'
+    "LogReg_l1": Pipeline([
+        ('preprocessor', preprocessor),
+        ('model',LogisticRegression(
+            C=0.1,
+            penalty='l1',
+            solver='saga',
+            random_state=random_state,
+            max_iter=max_iter,
+            class_weight=class_weight
+        ))
+    ]),
     #   3. "RidgeClassifier" — RidgeClassifier
+    "Ridge_class": Pipeline([
+         ('preprocessor', preprocessor),
+        ('model',RidgeClassifier(
+            alpha =  0.1 ,  
+            random_state=random_state,
+            max_iter=max_iter,
+            class_weight=class_weight
+        ))
+    ]),
     #   4. "Dummy_most_frequent" — DummyClassifier(strategy='most_frequent')
+    "dummy_most_frequent" :Pipeline([
+        ('preprocessor', preprocessor),
+        ('model', DummyClassifier(
+            strategy='most_frequent'
+        ))
+    ]),
     #   5. "Dummy_stratified" — DummyClassifier(strategy='stratified', random_state=42)
-    pass
+    "dummy_stratified" : Pipeline([
+        ('preprocessor', preprocessor),
+        ('model', DummyClassifier(
+            strategy='stratified',
+            random_state=random_state
+        ))
+    ])
+    
+ }
+    return models
 
 
 def evaluate_models(models, X, y, cv=5, random_state=42):
@@ -91,9 +142,37 @@ def evaluate_models(models, X, y, cv=5, random_state=42):
         DataFrame with columns: model, accuracy_mean, accuracy_std,
         precision_mean, recall_mean, f1_mean.
     """
-    # TODO: Loop over models, run cross_validate with scoring metrics,
+    #  Loop over models, run cross_validate with scoring metrics,
     #       collect results into a DataFrame
-    pass
+    results_list=[]
+    scoring = ["accuracy", "precision", "recall", "f1"]
+    for name , model in models.items():
+        
+         scores = cross_validate(model,X,y , cv=cv , scoring= scoring)
+        
+        
+         model_results ={
+            "model" : name,
+            "accuracy_mean":scores['test_accuracy'].mean(),
+            "accuracy_std":scores['test_accuracy'].std(),
+            "precision_mean": scores['test_precision'].mean(),
+            "recall_mean" : scores['test_recall'].mean(),
+            "f1_mean": scores['test_f1'].mean()
+        } 
+         
+         results_list.append(model_results) 
+         print(f"Done {name}")
+         
+    results_df = pd.DataFrame(results_list)
+    print ("\nAll models evaluated")
+    return results_df
+           
+                
+        
+       
+    
+   
+                
 
 
 def final_evaluation(pipeline, X_train, X_test, y_train, y_test):
