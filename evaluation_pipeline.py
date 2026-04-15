@@ -30,8 +30,13 @@ def load_and_prepare(filepath="data/telecom_churn.csv"):
         Tuple of (X, y) where X is a DataFrame of features
         and y is a Series of the target (churned).
     """
-    # TODO: Load CSV, drop customer_id, separate features and target
-    pass
+    # Load CSV, drop customer_id, separate features and target
+    df= pd.read_csv(filepath).copy()
+    df= df.drop(columns=["customer_id"])
+    x = df.drop(columns=['churned'])
+    y = df ['churned']   
+    return x, y 
+
 
 
 def build_preprocessor():
@@ -41,9 +46,15 @@ def build_preprocessor():
         ColumnTransformer that scales numeric features and
         one-hot encodes categorical features.
     """
-    # TODO: Create a ColumnTransformer with StandardScaler for numeric
+    #  Create a ColumnTransformer with StandardScaler for numeric
     #       and OneHotEncoder for categorical columns
-    pass
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ('numeric' , StandardScaler(), NUMERIC_FEATURES),
+            ('categorical', OneHotEncoder(drop="first", handle_unknown='ignore'), CATEGORICAL_FEATURES)
+        ]
+    )
+    return preprocessor
 
 
 def define_models():
