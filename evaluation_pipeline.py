@@ -13,6 +13,8 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.linear_model import LogisticRegression, RidgeClassifier
 from sklearn.dummy import DummyClassifier
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
 
 
 NUMERIC_FEATURES = ["tenure", "monthly_charges", "total_charges",
@@ -170,9 +172,7 @@ def evaluate_models(models, X, y, cv=5, random_state=42):
                 
         
        
-    
-   
-                
+                   
 
 
 def final_evaluation(pipeline, X_train, X_test, y_train, y_test):
@@ -191,9 +191,18 @@ def final_evaluation(pipeline, X_train, X_test, y_train, y_test):
     Returns:
         Dictionary with keys: 'accuracy', 'precision', 'recall', 'f1'.
     """
-    # TODO: Fit the pipeline on (X_train, y_train), predict on X_test,
+    #  Fit the pipeline on (X_train, y_train), predict on X_test,
     #       compute and return the 4 metrics as a dictionary
-    pass
+    
+    pipeline.fit (X_train,y_train)
+    y_pred = pipeline.predict(X_test)
+    results ={
+        'accuracy': accuracy_score(y_test, y_pred),
+        'precision': precision_score(y_test, y_pred),
+        'recall': recall_score(y_test, y_pred),
+        'f1': f1_score(y_test, y_pred)
+    }
+    return results
 
 
 def recommend_model(results_df):
@@ -230,8 +239,24 @@ if __name__ == "__main__":
                 recommend_model(results)
 
                 # Task 5: final evaluation on the held-out test set.
-                # TODO: Select the best model from the results DataFrame
+                #  Select the best model from the results DataFrame
                 #       (e.g., highest f1_mean among non-dummy rows), look it
                 #       up in the models dict, call final_evaluation with the
                 #       split, and print the final test-set metrics. Compare
                 #       them to the CV estimates.
+                index= results[results['model'].str.contains('LogReg|Ridge')]['f1_mean'].idxmax()
+                best_model = results.loc[index,'model']
+                best_pip = models[best_model]
+                
+                #final evaluation 
+                test_metrics = final_evaluation(best_pip,X_train,X_test, y_train, y_test)
+                print(f'\n Final Test Set Results for {best_model}: ')
+                print(test_metrics)
+        """
+        === Task 6: Final Recommendation ===
+        I recommend the RidgeClassifier because it achieved the highest F1-score of 0.347, significantly beating the stratified dummy's 0.16. 
+        While the most-frequent dummy showed a high 83.75% accuracy, its 0.0 F1-score proves that accuracy is misleading for churn detection where missing a customer is expensive. 
+        The recommended model effectively doubles our predictive power over random guessing while maintaining a stable trade-off between precision and recall. 
+        Finally, the test-set F1-score of 0.38 confirms the model generalizes well, as it closely aligns with our cross-validation estimates.
+        """
+                
